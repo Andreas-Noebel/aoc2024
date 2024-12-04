@@ -1,28 +1,33 @@
 pub mod solutions;
 
+use std::path::Path;
 use ansi_term::Style;
 use std::time::Instant;
+
+macro_rules! solution {
+    ($day:tt) => {{
+        let day = stringify!($day);
+        let input_file = Path::new("resources").join(day).join("input.txt");
+        if(!input_file.exists()) {
+            panic!("Input file {} for {} does not exist!", input_file.display(), day);
+        }
+        print_solution(day, solutions::$day::solve(input_file.to_str().unwrap()));
+    }}
+}
 
 fn main() {
     println!("{}", Style::new().bold().paint("---- Advent of Rust 2024 🦀🎄⭐   ----"));
     let timer = Instant::now();
-    solve_day(4);
+    solution!(day01);
+    solution!(day02);
+    solution!(day03);
+    solution!(day04);
     let time = timer.elapsed();
     println!("Total runtime: {:.2?}", time);
 }
 
-fn solve_day(day: u8) {
-    match day {
-        1 => print_solution(1, solutions::day01::solve()),
-        2 => print_solution(2, solutions::day02::solve()),
-        3 => print_solution(3, solutions::day03::solve()),
-        4 => print_solution(4, solutions::day04::solve()),
-        _ => println!("Not implemented"),
-    }
-}
-
-fn print_solution(day: u8, answers: (String, String)) {
-    println!("Day {}", day);
+fn print_solution(day: &str, answers: (String, String)) {
+    println!("{}", day);
     println!("  ├─── Part 1: {}", answers.0);
     println!("  └─── Part 2: {}", answers.1);
     println!("-------------------------------------")

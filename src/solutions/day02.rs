@@ -1,7 +1,7 @@
 use std::fs;
 
-pub fn solve() -> (String, String) {
-    let puzzle = parse_file("./resources/day02/input");
+pub fn solve(puzzle_file_path: &str) -> (String, String) {
+    let puzzle = parse_file(puzzle_file_path);
     let solution_one = solve_part_one(&puzzle);
     let solution_two = solve_part_two(&puzzle);
     (solution_one, solution_two)
@@ -70,14 +70,14 @@ mod tests {
 
     #[test]
     fn test_part_one() {
-        let puzzle = parse_file("./resources/day02/example");
+        let puzzle = parse_file("./resources/day02/example.txt");
         let solution_one = solve_part_one(&puzzle);
         assert_eq!(solution_one, "2");
     }
 
     #[test]
     fn test_part_two() {
-        let puzzle = parse_file("./resources/day02/example");
+        let puzzle = parse_file("./resources/day02/example.txt");
         let solution_one = solve_part_two(&puzzle);
         assert_eq!(solution_one, "4");
     }

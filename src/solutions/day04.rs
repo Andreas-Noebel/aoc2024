@@ -1,6 +1,5 @@
-pub fn solve() -> (String, String) {
-    let (width, height, matches_char_at_pos) = parse_puzzle("./resources/day04/input");
-
+pub fn solve(puzzle_file_path: &str) -> (String, String) {
+    let (width, height, matches_char_at_pos) = parse_puzzle(puzzle_file_path);
     let mut sum_part_one = 0;
     let mut sum_part_two = 0;
 
@@ -19,6 +18,10 @@ fn check_position_for_word(
     check_pos_for_char: impl Fn(i32, i32, char) -> bool,
     pos: (i32, i32),
 ) -> i32 {
+    if !check_pos_for_char(pos.0, pos.1, word.chars().nth(0).unwrap()) {
+        return 0;
+    }
+
     let search_directions: Vec<fn((i32, i32)) -> (i32, i32)> = Vec::from([
         |(x, y)| (x + 1, y),     // Right
         |(x, y)| (x, y - 1),     // Down
@@ -97,4 +100,16 @@ fn parse_puzzle(file_path: &str) -> (i32, i32, Box<dyn Fn(i32, i32, char) -> boo
     });
 
     (width, height, matches_char_at_pos)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_part_one_and_two() {
+        let (solution_one, solution_two) = solve("./resources/day04/example.txt");
+        assert_eq!(solution_one, "18");
+        assert_eq!(solution_two, "9");
+    }
 }

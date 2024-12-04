@@ -1,8 +1,8 @@
 use regex::Regex;
 use std::fs;
 
-pub fn solve() -> (String, String) {
-    let input = fs::read_to_string("./resources/day03/input").unwrap();
+pub fn solve(puzzle_file_path: &str) -> (String, String) {
+    let input = fs::read_to_string(puzzle_file_path).unwrap();
     let instructions = parse_instructions(&input);
     let solution_one = solve_part_one(&instructions);
     let solution_two = solve_part_two(&instructions);
@@ -77,7 +77,7 @@ mod tests {
 
     #[test]
     fn test_part_one() {
-        let input = fs::read_to_string("./resources/day03/example").unwrap();
+        let input = fs::read_to_string("./resources/day03/example.txt").unwrap();
         let puzzle = parse_instructions(&input);
         let solution_one = solve_part_one(&puzzle);
         assert_eq!(solution_one, "161");
@@ -85,7 +85,7 @@ mod tests {
 
     #[test]
     fn test_part_two() {
-        let input = fs::read_to_string("./resources/day03/example").unwrap();
+        let input = fs::read_to_string("./resources/day03/example.txt").unwrap();
         let puzzle = parse_instructions(&input);
         let solution_two = solve_part_two(&puzzle);
         assert_eq!(solution_two, "48");

@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 use std::fs;
 
-pub fn solve() -> (String, String) {
-    let solution_one  = solve_part_one("./resources/day01/input");
-    let solutions_two = solve_part_two("./resources/day01/input");
+pub fn solve(puzzle_file_path: &str) -> (String, String) {
+    let solution_one  = solve_part_one(puzzle_file_path);
+    let solutions_two = solve_part_two(puzzle_file_path);
     (solution_one, solutions_two)
 }
 
