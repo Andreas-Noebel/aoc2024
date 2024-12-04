@@ -1,26 +1,13 @@
 pub fn solve() -> (String, String) {
-    let (i, w, h) = parse_puzzle("./resources/day04/input");
+    let (width, height, matches_char_at_pos) = parse_puzzle("./resources/day04/input");
 
     let mut sum_part_one = 0;
     let mut sum_part_two = 0;
 
-    let check_char_at_pos = |x: i32, y: i32, c: char| {
-        if x < 0 || x >= w || y < 0 || y >= h {
-            false
-        } else {
-            i[(y * w + x) as usize] == c
-        }
-    };
-
-    for y in 0..h {
-        for x in 0..w {
-            let xmas_at_pos = check_position_for_word("XMAS", check_char_at_pos, (x, y));
-            let samx_at_pos = check_position_for_word("SAMX", check_char_at_pos, (x, y));
-            sum_part_one += xmas_at_pos + samx_at_pos;
-
-            if check_position_for_xmas_cross(check_char_at_pos, (x, y)) {
-                sum_part_two += 1;
-            }
+    for y in 0..height {
+        for x in 0..width {
+            sum_part_one += check_position_for_word("XMAS", &matches_char_at_pos, (x, y));
+            sum_part_two += check_position_for_mas_cross(&matches_char_at_pos, (x, y))
         }
     }
 
@@ -32,72 +19,82 @@ fn check_position_for_word(
     check_pos_for_char: impl Fn(i32, i32, char) -> bool,
     pos: (i32, i32),
 ) -> i32 {
-    let mut count = 0;
+    let search_directions: Vec<fn((i32, i32)) -> (i32, i32)> = Vec::from([
+        |(x, y)| (x + 1, y),     // Right
+        |(x, y)| (x, y - 1),     // Down
+        |(x, y)| (x + 1, y + 1), // Top-Right
+        |(x, y)| (x + 1, y - 1), // Down-Right
+        |(x, y)| (x - 1, y),     // Left
+        |(x, y)| (x, y + 1),     // Top
+        |(x, y)| (x - 1, y - 1), // Bot-Left
+        |(x, y)| (x - 1, y + 1), // Top-Left
+    ]);
 
-    // Check left to right
-    if check_in_direction(word, pos, |p| (p.0 + 1, p.1), &check_pos_for_char) {
-        count += 1;
-    }
-    // Check top to down
-    if check_in_direction(word, pos, |p| (p.0, p.1 - 1), &check_pos_for_char) {
-        count += 1;
-    }
-    // Diag right ascending
-    if check_in_direction(word, pos, |p| (p.0 + 1, p.1 + 1), &check_pos_for_char) {
-        count += 1;
-    }
-
-    // Diag right descending
-    if check_in_direction(word, pos, |p| (p.0 + 1, p.1 - 1), &check_pos_for_char) {
-        count += 1;
-    }
-
-    return count;
+    search_directions
+        .iter()
+        .filter(|direction| check_in_direction(word, pos, direction, &check_pos_for_char))
+        .count() as i32
 }
 
-fn check_position_for_xmas_cross(
-    check_pos_for_char: impl Fn(i32, i32, char) -> bool,
-    pos: (i32, i32),
-) -> bool {
-    if !check_pos_for_char(pos.0, pos.1, 'A') {
-        false
+fn check_position_for_mas_cross(
+    check_pos: impl Fn(i32, i32, char) -> bool,
+    (x, y): (i32, i32),
+) -> i32 {
+    if !check_pos(x, y, 'A') {
+        0
     } else {
-        let diag_one = check_pos_for_char(pos.0 - 1, pos.1 + 1, 'M')
-            && check_pos_for_char(pos.0 + 1, pos.1 - 1, 'S')
-            || check_pos_for_char(pos.0 - 1, pos.1 + 1, 'S')
-                && check_pos_for_char(pos.0 + 1, pos.1 - 1, 'M');
-        let diag_two = check_pos_for_char(pos.0 - 1, pos.1 - 1, 'M')
-            && check_pos_for_char(pos.0 + 1, pos.1 + 1, 'S')
-            || check_pos_for_char(pos.0 - 1, pos.1 - 1, 'S')
-                && check_pos_for_char(pos.0 + 1, pos.1 + 1, 'M');
-        diag_one && diag_two
+        let diag_one = check_pos(x - 1, y + 1, 'M') && check_pos(x + 1, y - 1, 'S')
+            || check_pos(x - 1, y + 1, 'S') && check_pos(x + 1, y - 1, 'M');
+        let diag_two = check_pos(x - 1, y - 1, 'M') && check_pos(x + 1, y + 1, 'S')
+            || check_pos(x - 1, y - 1, 'S') && check_pos(x + 1, y + 1, 'M');
+        if diag_one && diag_two {
+            1
+        } else {
+            0
+        }
     }
 }
 
 fn check_in_direction(
     word: &str,
-    pos: (i32, i32),
-    pos_increment: impl Fn((i32, i32)) -> (i32, i32),
-    check: impl Fn(i32, i32, char) -> bool,
+    start_position: (i32, i32),
+    position_update: impl Fn((i32, i32)) -> (i32, i32),
+    check_pos: impl Fn(i32, i32, char) -> bool,
 ) -> bool {
     if word.is_empty() {
         return true;
     }
-    let char = word.chars().nth(0).unwrap();
+    let mut chars = word.chars();
+    let head = chars.next().unwrap();
+    let tail = chars.as_str();
 
-    if check(pos.0, pos.1, char) == true {
-        let mut chars = word.chars();
-        chars.next();
-        check_in_direction(chars.as_str(), pos_increment(pos), pos_increment, check)
+    if check_pos(start_position.0, start_position.1, head) == true {
+        check_in_direction(
+            tail,
+            position_update(start_position),
+            position_update,
+            check_pos,
+        )
     } else {
         false
     }
 }
 
-fn parse_puzzle(file_path: &str) -> (Vec<char>, i32, i32) {
+fn parse_puzzle(file_path: &str) -> (i32, i32, Box<dyn Fn(i32, i32, char) -> bool>) {
     let mut input = std::fs::read_to_string(file_path).unwrap();
-    let width = input.find('\n').unwrap() - 1;
-    let height = input.len() / (width + 1);
+    let width = (input.find('\n').unwrap() - 1) as i32;
+    let height = input.len() as i32 / (width + 1);
+
     input.retain(|c| !c.is_whitespace());
-    (input.chars().collect(), width as i32, height as i32)
+    let flat_input: Vec<char> = input.chars().collect();
+
+    let matches_char_at_pos = Box::new(move |x: i32, y: i32, c: char| {
+        if x < 0 || x >= width || y < 0 || y >= height {
+            false
+        } else {
+            flat_input[(y * width + x) as usize] == c
+        }
+    });
+
+    (width, height, matches_char_at_pos)
 }
