@@ -17,17 +17,17 @@ enum Instruction {
 fn parse_instructions(input: &str) -> Vec<Instruction> {
     let reg = Regex::new(r"(mul\(\d{1,3},\d{1,3}\)|don't\(\)|do\(\))").unwrap();
     let instructions = reg
-        .captures_iter(input)
-        .map(|cap| cap[0].to_string())
-        .map(|ins| {
-            if ins.contains("don") {
+        .find_iter(input)
+        .map(|needle| needle.as_str())
+        .map(|ins_match| {
+            if ins_match.contains("don") {
                 return Instruction::DONT;
             }
-            if ins.contains("do") {
+            if ins_match.contains("do") {
                 return Instruction::DO;
             }
-            if ins.contains("mul") {
-                let factors = ins
+            if ins_match.contains("mul") {
+                let factors = ins_match
                     .replace("mul(", "")
                     .replace(")", "")
                     .split(",")
@@ -35,7 +35,7 @@ fn parse_instructions(input: &str) -> Vec<Instruction> {
                     .collect::<Vec<i32>>();
                 return Instruction::MUL(factors[0], factors[1]);
             }
-            panic!("Unknown instruction: {}", ins)
+            panic!("Unknown instruction: {}", ins_match)
         })
         .collect::<Vec<Instruction>>();
     instructions
