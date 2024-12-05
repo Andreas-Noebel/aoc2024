@@ -29,9 +29,11 @@ fn solve_part_two(constraints: &HashMap<u8, HashSet<u8>>, updates: &Vec<Vec<u8>>
 }
 
 fn is_page_order_correct(page_order: &Vec<u8>, constraints: &HashMap<u8, HashSet<u8>>) -> bool {
+    // Validates page order by recursively checking if the last element violates any constraint
+    // For an easier implementation the page order gets reversed
     let mut page_order_rev = page_order.clone();
     page_order_rev.reverse();
-    for i in 0..page_order.len() {
+    for i in 0..page_order_rev.len() {
         match constraints.get(&page_order_rev[i]) {
             Some(page_constraints) => {
                 for j in i + 1..page_order_rev.len() {
@@ -52,17 +54,22 @@ fn fix_page_order(page_order: &Vec<u8>, constraints: &HashMap<u8, HashSet<u8>>) 
     for i in 0..page_order_rev.len() {
         loop {
             let mut had_swap = false;
+            // Check if any constraint is violated and fix it
             match constraints.get(&page_order_rev[i]) {
                 Some(page_constraints) => {
                     for j in i + 1..page_order_rev.len() {
                         if page_constraints.contains(&page_order_rev[j]) {
                             page_order_rev.swap(i, j);
+                            // Curren page has changed, break to re-run with new constraints
                             had_swap = true;
+                            break;
                         }
                     }
                 }
                 None => {}
             }
+            // All constraints are satisfied, this page is in the right place.
+            // -> Go to next page
             if !had_swap {
                 break;
             }
@@ -125,7 +132,6 @@ mod tests {
         let input = std::fs::read_to_string("./resources/day05/example.txt").unwrap();
         let (c, u) = parse_puzzle(&input);
         let s = solve_part_two(&c, &u);
-        //assert_eq!(s, "5466")
         assert_eq!(s, "123")
     }
 }
