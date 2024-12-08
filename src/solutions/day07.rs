@@ -25,13 +25,13 @@ fn is_equation_solvable((solution, values): &Equation, ops: &Vec<Operation>) -> 
         return values[0] == *solution;
     }
 
-    // Optimization: assumes that there are no operations which reduce the result size
-    if values[0] > *solution {
-        return false;
-    }
-
     for operation in ops {
         let result = operation(values[0], values[1]);
+
+        // Optimization: assumes that there are no operations which reduce the result size
+        if result > *solution {
+            return false;
+        }
 
         let mut reduced_values: Vec<i64> = Vec::new();
         reduced_values.push(result);

@@ -18,9 +18,8 @@ macro_rules! solution {
 fn main() {
     println!("{}", Style::new().bold().paint("---- Advent of Rust 2024 🦀🎄⭐   ----"));
     let timer = Instant::now();
-    solution!(day07);
-    let time = timer.elapsed();
-    println!("Total runtime: {:.2?}", time);
+    solution!(day08);
+    println!("Total runtime: {:.2?}", timer.elapsed());
 }
 
 fn print_solution(day: &str, answers: (String, String)) {
