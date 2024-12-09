@@ -18,7 +18,7 @@ macro_rules! solution {
 fn main() {
     println!("{}", Style::new().bold().paint("---- Advent of Rust 2024 🦀🎄⭐   ----"));
     let timer = Instant::now();
-    solution!(day08);
+    solution!(day09);
     println!("Total runtime: {:.2?}", timer.elapsed());
 }
 
