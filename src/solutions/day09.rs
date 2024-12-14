@@ -52,7 +52,6 @@ fn solve_part_two(mut puzzle: Vec<i32>) -> i64 {
         }
         let file_block_size = file_end_index - file_start_index + 1;
 
-
         // Ignore data blocks that already have been visited
         if visited_file_blocks.contains(&puzzle[file_start_index]) {
             file_end_index -= file_block_size;
@@ -60,8 +59,6 @@ fn solve_part_two(mut puzzle: Vec<i32>) -> i64 {
         } else {
             visited_file_blocks.insert(puzzle[file_start_index]);
         }
-
-
 
         // Match first free
         let mut free_start_index = 0;
@@ -76,7 +73,6 @@ fn solve_part_two(mut puzzle: Vec<i32>) -> i64 {
             }
             let free_size = free_end_index - free_start_index + 1;
 
-
             // Check if space is large enough and swap in case of
             if free_size >= file_block_size {
                 for swap_index in 0..file_block_size {
@@ -87,7 +83,8 @@ fn solve_part_two(mut puzzle: Vec<i32>) -> i64 {
                 free_start_index += free_size;
             }
 
-            if free_start_index >= file_start_index || file_start_index == 0 && file_block_size == 0 {
+            if free_start_index >= file_start_index || file_start_index == 0 && file_block_size == 0
+            {
                 break 'find_free_first;
             }
         }
@@ -111,6 +108,7 @@ fn calc_checksum(puzzle: &Vec<i32>) -> i64 {
 }
 
 fn parse_puzzle_input(input: &str) -> Vec<i32> {
+    let input = input.lines().next().unwrap();
     let disk_size = input
         .to_string()
         .chars()

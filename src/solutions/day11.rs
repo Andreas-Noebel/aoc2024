@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 pub fn solve(input_file_path: &str) -> (String, String) {
     let input = std::fs::read_to_string(input_file_path).unwrap();
+    let input = input.lines().next().unwrap();
 
     let input = input
         .split(" ")
