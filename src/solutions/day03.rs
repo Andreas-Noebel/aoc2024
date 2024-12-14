@@ -41,7 +41,6 @@ fn parse_instructions(input: &str) -> Vec<Instruction> {
     instructions
 }
 
-// 161289189
 fn solve_part_one(instructions: &Vec<Instruction>) -> String {
     let mut sum = 0;
     for instruction in instructions {
@@ -53,7 +52,6 @@ fn solve_part_one(instructions: &Vec<Instruction>) -> String {
     sum.to_string()
 }
 
-// 83595109
 fn solve_part_two(instructions: &Vec<Instruction>) -> String {
     let mut is_do_enabled = true;
     let mut line_sum = 0;

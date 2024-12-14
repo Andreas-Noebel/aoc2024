@@ -51,3 +51,19 @@ fn parse_file(file_path: &str) -> (Vec<i32>, Vec<i32>) {
 
     (left_list, right_list)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn test_part_one() {
+        let solution_one  = solve_part_one("./resources/day01/example.txt");
+        assert_eq!(solution_one, "11");
+    }
+
+    #[test]
+    fn test_part_two() {
+        let solution_two = solve_part_two("./resources/day01/example.txt");
+        assert_eq!(solution_two, "31");
+    }
+}
