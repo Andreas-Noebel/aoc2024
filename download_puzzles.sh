@@ -1,6 +1,6 @@
 #!/bin/bash
 
-resource_home=resources
+RESOURCE_HOME=resources
 
 echo -e "\033[1mPuzzle Downloader 🧩 - Advent of Code 2024 ⭐🎄\033[0m"
 echo ""
@@ -20,7 +20,6 @@ PROFILE_STARS="$(echo "$PROFILE_HTML" | grep -oP '(?<=<span class="star-count">)
 
 # Print profile info and prompt user to continue
 echo -e "\033[A\033[2K"
-#echo
 echo -e "Found user \033[32m$PROFILE_NAME\033[0m with \033[1;33m$PROFILE_STARS stars\033[0m"
 echo ""
 read -p "Do you want to proceed with download? (y/n): " response
@@ -36,8 +35,8 @@ fi
 for DAY in $(seq 1 14);
 do
     DAY_LEADING_ZERO=$(printf "%02d" "$DAY")
-    mkdir -p "$resource_home/day$DAY_LEADING_ZERO"
-    PUZZLE_FILE=$resource_home/day$DAY_LEADING_ZERO/input.txt
+    PUZZLE_FILE=$RESOURCE_HOME/day$DAY_LEADING_ZERO/input.txt
+    mkdir -p "$RESOURCE_HOME/day$DAY_LEADING_ZERO"
 
     if [ -f "$PUZZLE_FILE" ]; then
     	echo "Puzzle for $DAY exists (Skipping)"

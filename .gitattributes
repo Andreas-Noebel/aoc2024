@@ -1,0 +1,2 @@
+# Dont break shell scripts on windows 
+*.sh text eol=lf
