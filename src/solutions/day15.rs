@@ -83,7 +83,7 @@ impl WarehouseBox {
 struct Warehouse {
     width: i32,
     height: i32,
-    robot_position: Position,
+    robot: Position,
     walls: HashSet<Position>,
     boxes: HashMap<i32, WarehouseBox>,
 }
@@ -91,10 +91,7 @@ struct Warehouse {
 impl Warehouse {
     fn move_robot(&mut self, instruction: Instruction) {
         let direction = instruction.to_direction();
-        let next_position = (
-            self.robot_position.0 + direction.0,
-            self.robot_position.1 + direction.1,
-        );
+        let next_position = (self.robot.0 + direction.0, self.robot.1 + direction.1);
 
         // Next pos is a wall do nothing
         if self.walls.contains(&next_position) {
@@ -104,20 +101,15 @@ impl Warehouse {
         // Next pos has a box try to move it
         if let Some(ware_house_box) = self.get_box_at_pos(&next_position) {
             let mut affected_boxes: HashSet<WarehouseBox> = HashSet::new();
-
             if self.is_box_pushable(&ware_house_box, &direction, &mut affected_boxes) {
-                let mut updated_boxes = self.boxes.clone();
-
                 for mut boxes_to_push in affected_boxes {
                     boxes_to_push.push(instruction);
-                    updated_boxes.insert(boxes_to_push.id, boxes_to_push);
+                    self.boxes.insert(boxes_to_push.id, boxes_to_push);
                 }
-
-                self.boxes = updated_boxes;
-                self.robot_position = next_position;
+                self.robot = next_position;
             }
         } else {
-            self.robot_position = next_position;
+            self.robot = next_position;
         }
     }
     #[allow(dead_code)]
@@ -136,7 +128,7 @@ impl Warehouse {
                 grid[(y * self.width + x + 1) as usize] = ']';
             }
         });
-        grid[(self.robot_position.1 * self.width + self.robot_position.0) as usize] = '@';
+        grid[(self.robot.1 * self.width + self.robot.0) as usize] = '@';
 
         for y in 0..self.height {
             for x in 0..self.width {
@@ -217,7 +209,7 @@ impl Warehouse {
             (*id, scaled_box)
         }));
 
-        self.robot_position = (self.robot_position.0 * 2, self.robot_position.1);
+        self.robot = (self.robot.0 * 2, self.robot.1);
         self.walls = scaled_walls;
     }
 }
@@ -261,8 +253,8 @@ fn parse_input(input: &str) -> (Warehouse, Vec<Instruction>) {
             '<' => { instructions.push(Instruction::West); }
             _ => {}
         })
-
     }
+
     let boxes = HashMap::from_iter(boxes.iter().enumerate().map(|(id, pos)| {
         let warehouse_box = WarehouseBox {
             id: id as i32,
@@ -273,13 +265,7 @@ fn parse_input(input: &str) -> (Warehouse, Vec<Instruction>) {
         (id as i32, warehouse_box)
     }));
 
-    let ware_house = Warehouse {
-        width,
-        height,
-        robot_position,
-        walls,
-        boxes,
-    };
+    let ware_house = Warehouse {width, height, robot:robot_position, walls, boxes};
 
     (ware_house, instructions)
 }

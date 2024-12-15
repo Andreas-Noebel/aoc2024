@@ -8,14 +8,16 @@ pub fn solve(puzzle_file_path: &str) -> (String, String) {
 }
 
 fn solve_part_one(puzzle: &Vec<Vec<i32>>) -> String {
-    let safe_reports = puzzle.iter()
+    let safe_reports = puzzle
+        .iter()
         .filter(|report| is_safe_report(report))
         .count();
     safe_reports.to_string()
 }
 
 fn solve_part_two(puzzle: &Vec<Vec<i32>>) -> String {
-    let safe_reports = puzzle.iter()
+    let safe_reports = puzzle
+        .iter()
         .filter(|report| is_safe_report_damped(report))
         .count();
     safe_reports.to_string()
@@ -56,11 +58,12 @@ fn parse_file(file_path: &str) -> Vec<Vec<i32>> {
     let lines = fs::read_to_string(file_path)
         .unwrap()
         .lines()
-        .map(|line|
+        .map(|line| {
             line.split_whitespace()
                 .map(|value| value.parse::<i32>().unwrap())
                 .collect()
-        ).collect::<Vec<Vec<i32>>>();
+        })
+        .collect::<Vec<Vec<i32>>>();
     lines
 }
 

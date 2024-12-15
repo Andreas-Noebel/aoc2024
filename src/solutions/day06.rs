@@ -12,8 +12,12 @@ enum Direction {
 pub fn solve(puzzle_input_path: &str) -> (String, String) {
     let input = std::fs::read_to_string(puzzle_input_path).unwrap();
     let (width, height, position, obstacles) = parse_puzzle(&input);
-    let solution_one = solve_part_one(width, height, &position, &obstacles).unwrap().to_string();
-    let solution_two = solve_part_two(width, height, &position, &obstacles).unwrap().to_string();
+    let solution_one = solve_part_one(width, height, &position, &obstacles)
+        .unwrap()
+        .to_string();
+    let solution_two = solve_part_two(width, height, &position, &obstacles)
+        .unwrap()
+        .to_string();
     (solution_one, solution_two)
 }
 
@@ -96,15 +100,16 @@ fn solve_part_two(
     let default_path = simulate_guard(width, height, &guard_position, &obstacles)?;
 
     for test_obstacle in default_path.keys() {
-
-        if &guard_position == &test_obstacle  {
+        if &guard_position == &test_obstacle {
             continue;
         }
         obstacles_extended.insert(test_obstacle.clone());
 
         match simulate_guard(width, height, &guard_position, &obstacles_extended) {
             Ok(_) => {}
-            Err(_) => { possible_looping_obstacles += 1; }
+            Err(_) => {
+                possible_looping_obstacles += 1;
+            }
         }
         obstacles_extended.remove(&test_obstacle);
     }

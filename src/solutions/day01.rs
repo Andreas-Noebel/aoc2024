@@ -2,13 +2,13 @@ use std::collections::HashMap;
 use std::fs;
 
 pub fn solve(puzzle_file_path: &str) -> (String, String) {
-    let solution_one  = solve_part_one(puzzle_file_path);
+    let solution_one = solve_part_one(puzzle_file_path);
     let solutions_two = solve_part_two(puzzle_file_path);
     (solution_one, solutions_two)
 }
 
 fn solve_part_one(file_path: &str) -> String {
-    let (mut left_list,mut right_list) = parse_file(file_path);
+    let (mut left_list, mut right_list) = parse_file(file_path);
     left_list.sort();
     right_list.sort();
 
@@ -19,7 +19,7 @@ fn solve_part_one(file_path: &str) -> String {
     result.to_string()
 }
 
-fn solve_part_two(file_path: &str) -> String{
+fn solve_part_two(file_path: &str) -> String {
     let (left_list, right_list) = parse_file(file_path);
     let mut numb_occurrence = HashMap::new();
 
@@ -57,7 +57,7 @@ mod tests {
     use super::*;
     #[test]
     fn test_part_one() {
-        let solution_one  = solve_part_one("./resources/day01/example.txt");
+        let solution_one = solve_part_one("./resources/day01/example.txt");
         assert_eq!(solution_one, "11");
     }
 

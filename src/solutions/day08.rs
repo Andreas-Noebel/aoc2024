@@ -21,8 +21,7 @@ fn solve_part_one((width, height): FieldSize, antennas: &Antennas) -> i32 {
     for (_, positions) in antennas {
         for i in 0..positions.len() - 1 {
             for j in (i + 1)..positions.len() {
-                let anti_nodes_signal =
-                    get_anti_nodes(positions[i], positions[j], &out_of_bound);
+                let anti_nodes_signal = get_anti_nodes(positions[i], positions[j], &out_of_bound);
                 anti_nodes_all.extend(anti_nodes_signal);
             }
         }
@@ -32,7 +31,6 @@ fn solve_part_one((width, height): FieldSize, antennas: &Antennas) -> i32 {
 }
 
 fn solve_part_two((width, height): FieldSize, antennas: &Antennas) -> i32 {
-
     // Code duplication but im too lazy ¯\_(ツ)_/¯
     let mut anti_nodes_all: HashSet<Position> = HashSet::new();
     let out_of_bound = |(x, y): &Position| -> bool {
@@ -42,8 +40,7 @@ fn solve_part_two((width, height): FieldSize, antennas: &Antennas) -> i32 {
     for (_, positions) in antennas {
         for i in 0..positions.len() - 1 {
             for j in (i + 1)..positions.len() {
-                let anti_nodes_signal =
-                    get_anti_nodes(positions[i], positions[j], &out_of_bound);
+                let anti_nodes_signal = get_anti_nodes(positions[i], positions[j], &out_of_bound);
                 let anti_nodes_resonance =
                     get_anti_nodes_resonance(positions[i], positions[j], &out_of_bound);
                 anti_nodes_all.extend(anti_nodes_signal);
