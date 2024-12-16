@@ -2,6 +2,9 @@ use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashMap, HashSet};
 
 pub fn solve(input_path: &str) -> (String, String) {
+    let input = std::fs::read_to_string(input_path).unwrap();
+    let labyrinth = parse(&input);
+    find_shortest_paths(&labyrinth);
     ("".to_string(), "".to_string())
 }
 
@@ -35,6 +38,34 @@ enum Direction {
     East,
     West,
 }
+
+impl Direction {
+    fn to_direction(&self) -> (i32, i32) {
+        match self {
+            Direction::North => (0, -1),
+            Direction::South => (0, 1),
+            Direction::East => (1, 0),
+            Direction::West => (-1, 0),
+        }
+    }
+    fn rot_clockwise(&self) -> Direction {
+        match self {
+            Direction::North => Direction::East,
+            Direction::East => Direction::South,
+            Direction::South => Direction::West,
+            Direction::West => Direction::North,
+        }
+    }
+    fn rot_anti_clockwise(&self) -> Direction {
+        match self {
+            Direction::North => Direction::West,
+            Direction::West => Direction::South,
+            Direction::South => Direction::East,
+            Direction::East => Direction::North,
+        }
+    }
+}
+
 #[derive(Clone, Copy, Eq, PartialEq, Debug)]
 enum Action {
     MoveForward,
@@ -67,6 +98,187 @@ impl PartialOrd for ReindeerState {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
+}
+
+#[derive(Clone, Hash, Eq, PartialEq, Debug)]
+struct Node {
+    position: (i32, i32),
+    orientation: Direction,
+}
+
+#[derive(Clone, Eq, PartialEq, Debug)]
+struct Priority {
+    priority: i32,
+    node: Node,
+}
+
+impl PartialOrd<Self> for Priority {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Priority {
+    fn cmp(&self, other: &Self) -> Ordering {
+        other.priority.cmp(&self.priority)
+    }
+}
+
+fn find_shortest_paths(labyrinth: &Labyrinth) -> i32 {
+    let mut open_list = BinaryHeap::<Priority>::new();
+    let mut visited: HashSet<Node> = HashSet::new();
+    let mut costs: HashMap<Node, i32> = HashMap::new();
+    let mut predecessors: HashMap<Node, HashSet<Node>> = HashMap::new();
+
+    let start_node = Node {
+        position: labyrinth.start_position,
+        orientation: Direction::East,
+    };
+
+    costs.insert(start_node.clone(), 0);
+
+    open_list.push(Priority {
+        priority: 0,
+        node: start_node,
+    });
+
+    //let mut shortest_path = i32::MAX;
+
+    while !open_list.is_empty() {
+        let node = open_list.pop().unwrap().node;
+        if node.position == labyrinth.end_position {
+            let total_costs = costs.get(&node).unwrap();
+            return total_costs.clone();
+            /*
+            if total_costs <= &shortest_path {
+                shortest_path = total_costs.clone();
+                println!("Solution Found {:?}", total_costs);
+
+                let paths = extract_paths(node.clone(), &predecessors, Vec::new());
+                println!("Found {:?} unique paths", paths.len());
+
+                let mut unique_tiles: HashSet<(i32,i32)> = HashSet::new();
+                for p in paths{
+                    //    println!("Path {:?}", p);
+                    for tile in p{
+                        print!("{:?} ", tile.position);
+                        unique_tiles.insert(tile.position);
+                    }
+                    println!();
+                }
+                println!("Unique tiles {:?}", unique_tiles.len());
+            }else {
+               return;
+            }
+
+             */
+        }
+        visited.insert(node.clone());
+
+        // Expand node
+        let successors: Vec<(Node, i32)> = get_successors(&node, &labyrinth);
+        for (successor, cost) in successors {
+            if visited.contains(&successor) {
+                continue;
+            }
+
+            let tentative_cost = costs.get(&node).unwrap() + cost;
+            // Missing optimization continue if node is already in open set
+            /*
+            if costs.get(&successor).is_some() {
+                if costs.get(&successor).unwrap() < &tentative_cost {
+                    continue;
+                }else {
+                    let pred = predecessors.entry(successor.clone()).or_insert(HashSet::new());
+                    pred.clear()
+                }
+            }
+            */
+
+            let pred = predecessors
+                .entry(successor.clone())
+                .or_insert(HashSet::new());
+            pred.insert(node.clone());
+
+            costs.insert(successor.clone(), tentative_cost);
+
+            let priority = tentative_cost + labyrinth.direct_distance_to_end(successor.position);
+            open_list.push(Priority {
+                priority: priority,
+                node: successor,
+            })
+        }
+    }
+    0
+}
+
+fn extract_path(end_node: Node, p: &HashMap<Node, HashSet<Node>>) {
+    let mut current_node = end_node;
+    loop {
+        match p.get(&current_node) {
+            None => break,
+            Some(set) => {
+                println!("{:?}", set);
+                current_node = set.iter().next().unwrap().clone();
+            }
+        }
+    }
+}
+
+fn extract_paths(
+    end_node: Node,
+    predecessors: &HashMap<Node, HashSet<Node>>,
+    mut acc: Vec<Node>,
+) -> Vec<Vec<Node>> {
+    acc.push(end_node.clone());
+    match predecessors.get(&end_node) {
+        None => vec![acc],
+        Some(set) => {
+            let mut sub_paths: Vec<Vec<Node>> = Vec::new();
+            for pred in set.iter() {
+                let sub_paths_for_pred = extract_paths(pred.clone(), predecessors, Vec::new());
+                for sub_sub_path in sub_paths_for_pred {
+                    let mut a_s = acc.clone();
+                    a_s.extend(sub_sub_path.clone());
+                    sub_paths.push(a_s);
+                }
+            }
+            sub_paths
+        }
+    }
+}
+
+fn get_successors(node: &Node, labyrinth: &Labyrinth) -> Vec<(Node, i32)> {
+    let mut sucessors: Vec<(Node, i32)> = vec![
+        (
+            Node {
+                position: node.position,
+                orientation: node.orientation.rot_clockwise(),
+            },
+            1000,
+        ),
+        (
+            Node {
+                position: node.position,
+                orientation: node.orientation.rot_anti_clockwise(),
+            },
+            1000,
+        ),
+    ];
+    let (x, y) = node.position.clone();
+    let (dx, dy) = node.orientation.to_direction();
+    let forward_position = (x + dx, y + dy);
+
+    if !labyrinth.is_wall(forward_position) {
+        sucessors.push((
+            Node {
+                position: forward_position,
+                orientation: node.orientation,
+            },
+            1,
+        ));
+    }
+    sucessors
 }
 
 fn find_lowest_costs(labyrinth: &Labyrinth) -> i32 {
@@ -206,11 +418,11 @@ fn parse(input: &str) -> Labyrinth {
             '#' => true,
             '.' => false,
             'E' => {
-                start_pos = ((index / width) as i32, (index % width) as i32);
+                start_pos = ((index % width) as i32, (index / width) as i32);
                 false
             }
             'S' => {
-                end_pos = ((index / width) as i32, (index % width) as i32);
+                end_pos = ((index % width) as i32, (index / width) as i32);
                 false
             }
             _ => {
@@ -242,13 +454,22 @@ mod tests {
     fn test_part_one() {
         let input = std::fs::read_to_string("./resources/day16/example.txt").unwrap();
         let labyrinth = parse(&input);
-        let cost = find_lowest_costs(&labyrinth);
-        assert_eq!(cost.to_string(), "7036");
+        let l = find_shortest_paths(&labyrinth);
+        assert_eq!(l.to_string(), "7036");
     }
 
+    #[test]
     fn test_part_two() {
-        let input = std::fs::read_to_string("./resources/day16/input.txt").unwrap();
+        let input = std::fs::read_to_string("./resources/day16/example.txt").unwrap();
         let labyrinth = parse(&input);
-        find_lowest_costs(&labyrinth);
+        let l = find_shortest_paths(&labyrinth);
+        println!("{:?}",l)
+    }
+
+    #[test]
+    fn test_custom() {
+        let input = std::fs::read_to_string("./resources/day16/example_custom.txt").unwrap();
+        let labyrinth = parse(&input);
+        find_shortest_paths(&labyrinth);
     }
 }
