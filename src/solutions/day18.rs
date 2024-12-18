@@ -8,7 +8,7 @@ pub fn solve(input_file_path: &str) -> (String, String) {
     let solution_path = solve_part_one(&maze);
     let solution_one = solution_path.len() - 1;
 
-    let solution_two = solve_part_two(&maze, &solution_path);
+    let solution_two = solve_part_two(&maze);
 
     (solution_one.to_string(), solution_two)
 }
@@ -22,24 +22,26 @@ fn solve_part_one(maze: &Maze) -> Vec<(usize, usize)> {
     solution_path
 }
 
-fn solve_part_two(maze_s: &Maze, solution_path: &Vec<(usize, usize)>) -> String {
-    let mut maze = maze_s.clone();
-    let path_lookup: HashSet<(u8, u8)> =
-        HashSet::from_iter(solution_path.iter().map(|&(x, y)| (x as u8, y as u8)));
-    for i in 1..maze.falling_bytes.len() {
-        let blocking_byte = *maze.falling_bytes.get(i - 1).unwrap();
+fn solve_part_two(maze: &Maze) -> String {
+    let mut lower = 0;
+    let mut higher = maze.falling_bytes.len();
 
-        if path_lookup.contains(&blocking_byte) {
-            continue;
-        }
-
-        maze.simulate(i);
-        if let Err(_) = maze.shortest_path(maze.get_start_position(), maze.get_end_position()) {
-            let res = format!("{},{}", blocking_byte.0, blocking_byte.1);
-            return res;
+    while higher - lower > 1 {
+        let mid = (higher - lower) / 2 + lower;
+        let mut m = maze.clone();
+        m.simulate(mid);
+        match m.shortest_path(m.get_start_position(), m.get_end_position()) {
+            Ok(_) => {
+                lower = mid;
+            }
+            Err(_) => {
+                higher = mid;
+            }
         }
     }
-    "No solution".to_string()
+    let blocking_byte = *maze.falling_bytes.get(lower).unwrap();
+    let res = format!("{},{}", blocking_byte.0, blocking_byte.1);
+    res
 }
 
 #[derive(Clone)]
@@ -169,8 +171,9 @@ fn parse_puzzle(input: &str, size: (usize, usize)) -> Maze {
     Maze::new(size.0, size.1, fb)
 }
 
+#[cfg(test)]
 mod tests {
-    use crate::solutions::day18::{parse_puzzle, solve_part_two};
+    use super::*;
 
     #[test]
     fn test_part_one() {
@@ -187,7 +190,7 @@ mod tests {
     fn test_part_two() {
         let input = std::fs::read_to_string("./resources/day18/example.txt").unwrap();
         let maze = parse_puzzle(&input, (7, 7));
-        let solution = solve_part_two(&maze, &Vec::new());
+        let solution = solve_part_two(&maze);
         assert_eq!(solution, "6,1");
     }
 }
