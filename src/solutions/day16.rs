@@ -283,7 +283,7 @@ mod tests {
 
     #[test]
     fn test_part_two() {
-        let input = std::fs::read_to_string("./resources/day16/input.txt").unwrap();
+        let input = std::fs::read_to_string("./resources/day16/example.txt").unwrap();
         let labyrinth = parse(&input);
         let (_, l) = find_shortest_paths(&labyrinth).unwrap();
         assert_eq!(l.to_string(), "45");
