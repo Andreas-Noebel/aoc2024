@@ -85,19 +85,15 @@ impl Maze {
         start: (usize, usize),
         end: (usize, usize),
     ) -> Result<Vec<(usize, usize)>, String> {
-        let mut open_set: VecDeque<(usize, usize)> = VecDeque::new();
-        let mut closed_set: HashSet<(usize, usize)> = HashSet::new();
-        let mut pred: HashMap<(usize, usize), (usize, usize)> = HashMap::new();
+        let mut open_set: VecDeque<(usize, usize)> = VecDeque::with_capacity(1000);
+        let mut closed_set: HashSet<(usize, usize)> = HashSet::with_capacity(1000);
+        let mut pred: HashMap<(usize, usize), (usize, usize)> = HashMap::with_capacity(1000);
 
         open_set.push_back(start);
 
         while !open_set.is_empty() {
             let pos @ (x, y) = open_set.pop_front().unwrap();
-
-            if closed_set.contains(&pos) {
-                continue;
-            }
-
+            
             closed_set.insert(pos);
             if pos == end {
                 // Found end node reconstruct path
@@ -116,7 +112,10 @@ impl Maze {
                 if closed_set.contains(&neighbor) {
                     continue;
                 }
-                open_set.push_back(neighbor);
+
+                if !open_set.contains(&neighbor) {
+                    open_set.push_back(neighbor);
+                }
                 pred.insert(neighbor, pos);
             }
         }
