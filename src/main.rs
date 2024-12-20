@@ -25,7 +25,7 @@ fn main() {
         parse_options(&args)
     } else {
         CIOptions {
-            target: ExecutionTarget::RunSingleDay(19),
+            target: ExecutionTarget::RunSingleDay(20),
         }
     };
     println!("{ANSI_BOLD}---- Advent of Rust 2024 🦀🎄⭐   ----{ANSI_RESET}");
@@ -64,7 +64,7 @@ fn execute_ci_options(options: CIOptions) {
         }
         ExecutionTarget::RunAllDays => {
             let timer = Instant::now();
-            for day in 0..19 {
+            for day in 0..21 {
                 let lap_time = Instant::now();
                 match solve_day(day) {
                     Ok(solution) => {

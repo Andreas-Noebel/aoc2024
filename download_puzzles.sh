@@ -32,7 +32,7 @@ else
     exit 1
 fi
 
-for DAY in $(seq 1 18);
+for DAY in $(seq 1 20);
 do
     DAY_LEADING_ZERO=$(printf "%02d" "$DAY")
     PUZZLE_FILE=$RESOURCE_HOME/day$DAY_LEADING_ZERO/input.txt
