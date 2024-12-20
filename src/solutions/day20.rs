@@ -1,7 +1,5 @@
-use std::cmp::min;
 use std::collections::{HashSet, VecDeque};
 use std::fmt::Display;
-use std::iter;
 use std::iter::{repeat, zip};
 
 pub fn solve(input_file_path: &str) -> (String, String) {
@@ -165,7 +163,7 @@ impl Maze {
         Ok(costs_to_target)
     }
 
-    fn get_shortcuts(&self) -> Vec<(Position, Costs, Position)> {
+    fn get_shortcuts(&self, steps: u32) -> Vec<(Position, Costs, Position)> {
         let costs_to_end = self.get_costs_to_position(&self.get_end_pos()).unwrap();
         let costs_to_start = self.get_costs_to_position(&self.get_start_pos()).unwrap();
 
@@ -176,11 +174,9 @@ impl Maze {
         let mut cheats: Vec<(Position, Costs, Position)> = Vec::new();
         for y in 1..self.height - 1 {
             for x in 1..self.width - 1 {
-                if self.is_position_free((x, y)) {
-                    continue;
-                }
+                //if self.is_position_free((x, y)) { continue; }
 
-
+                /*
                 let shortcuts = vec![
                     ((x - 1, y), (x + 1, y)),
                     ((x, y - 1), (x, y + 1)),
@@ -188,10 +184,10 @@ impl Maze {
                     //((x - 1, y + 1), (x + 1, y - 1)),
                     // diagonal moves not included
                 ];
+                */
 
-                //let shortcut_end_pos = self.get_cheat_end_positions((x,y),2);
-                //let shortcuts = zip(repeat((x,y)), shortcut_end_pos);
-
+                let shortcut_end_pos = self.get_cheat_end_positions((x, y), steps);
+                let shortcuts = zip(repeat((x, y)), shortcut_end_pos);
 
                 for (a, b) in shortcuts {
                     if !self.is_position_free(a) || !self.is_position_free(b) {
@@ -203,35 +199,47 @@ impl Maze {
                     let cost_a_to_end = costs_to_end[a.1 * self.width + a.0];
                     let cost_b_to_end = costs_to_end[b.1 * self.width + b.0];
 
-                    let min_costs_to_start = min(cost_a_to_start, cost_b_to_start);
-                    let min_costs_to_end = min(cost_a_to_end, cost_b_to_end);
+                    //let min_costs_to_start = min(cost_a_to_start, cost_b_to_start);
+                    //let min_costs_to_end = min(cost_a_to_end, cost_b_to_end);
 
-                    let discounted_path_costs = min_costs_to_end + min_costs_to_start + 2;
+                    if (cost_b_to_end > cost_a_to_end) {
+                        continue;
+                    }
+
+                    let cheat_costs = a.0.abs_diff(b.0) + a.1.abs_diff(b.1);
+
+
+                    let discounted_path_costs = cost_a_to_start + cost_b_to_end + cheat_costs as Costs;
                     if discounted_path_costs >= solution_without_shortcuts {
                         continue;
                     }
                     let discount = solution_without_shortcuts - discounted_path_costs;
 
-                    if cost_a_to_end < cost_b_to_end {
-                        cheats.push((a, discount, b))
-                    } else {
-                        cheats.push((b, discount, a))
-                    }
+                    //if cost_a_to_end < cost_b_to_end {
+                    cheats.push((a, discount, b));
+                    //} else {
+                    //  cheats.push((b, discount, a))
+                    //}
                 }
             }
         }
         cheats
     }
 
-    fn get_cheat_end_positions(&self, start_pos @ (sx, sy): Position, steps: u32) -> Vec<Position> {
-        let mut cheat_end_positions: Vec<Position> = Vec::new();
+    fn get_cheat_end_positions(
+        &self,
+        start_pos @ (sx, sy): Position,
+        steps: u32,
+    ) -> HashSet<Position> {
+        let mut cheat_end_positions: HashSet<Position> = HashSet::new();
         let sx = sx as i32;
         let sy = sy as i32;
         let steps = steps as i32;
 
-        for y in 1..steps + 1{
-            for x in 1..steps + 1 {
-                if x + y > steps {
+
+        for y in 0..steps + 1 {
+            for x in 0..steps + 1 {
+                if x + y > steps || (x == 0 && y == 0) {
                     continue;
                 }
                 let step_end_pos = vec![
@@ -240,7 +248,7 @@ impl Maze {
                     (sx - x, sy + y),
                     (sx - x, sy - y),
                 ];
-                let step_end_pos = step_end_pos
+                step_end_pos
                     .iter()
                     .filter(|(px, py)| {
                         px >= &0
@@ -253,8 +261,10 @@ impl Maze {
                         self.is_position_free(p)
                     })
                     .map(|(px, py)| (*px as usize, *py as usize))
-                    .collect::<Vec<Position>>();
-                cheat_end_positions.extend(step_end_pos);
+                    .for_each(|(px, py)| {
+                        cheat_end_positions.insert((px, py));
+                    });
+                //cheat_end_positions.extend(step_end_pos);
             }
         }
         cheat_end_positions
@@ -303,8 +313,21 @@ mod tests {
     fn test_part_one() {
         let input = std::fs::read_to_string("./resources/day20/input.txt").unwrap();
         let puzzle = parse(&input);
-        let cheats = puzzle.get_shortcuts();
-        println!("Cheats: {:#?}", cheats.len());
-        println!("{}", cheats.iter().filter(|(_, c, _)| *c >= 100).count());
+        let cheats = puzzle.get_shortcuts(20);
+        //println!("Cheats: {:#?}", cheats.len());
+        println!("Filtered Cheats {}", cheats.iter().filter(|(_, c, _)| *c >= 100).count());
+
+
+        /*
+        cheats
+            .iter()
+            .filter(|(_, c, _)| *c == 76)
+            .for_each(|(s, c, e)| {
+                println!("{:?} {:?}  - {}", s, e, c);
+            });
+*/
+
+
     }
+
 }
