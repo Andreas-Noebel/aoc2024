@@ -130,6 +130,7 @@ fn solve_day(day: i32) -> Result<(String, String), String> {
         17 => solution!(day17),
         18 => solution!(day18),
         19 => solution!(day19),
+        20 => solution!(day20),
         _ => Err("Unknown day".to_string()),
     };
     solution
