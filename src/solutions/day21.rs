@@ -1,7 +1,6 @@
-use crate::solutions::day21::AbstractKey::{Accept, ArrowBottom, ArrowRight, ArrowTop, Number};
+use crate::solutions::day21::AbstractKey::{Accept, ArrowBottom, ArrowRight, ArrowLeft, ArrowTop, Number};
 use std::cmp::min;
 use std::collections::HashMap;
-use AbstractKey::ArrowLeft;
 
 pub fn solve(input_file_path: &str) -> (String, String) {
 

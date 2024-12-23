@@ -25,7 +25,7 @@ fn main() {
         parse_options(&args)
     } else {
         CIOptions {
-            target: ExecutionTarget::RunSingleDay(21),
+            target: ExecutionTarget::RunSingleDay(23),
         }
     };
     println!("{ANSI_BOLD}---- Advent of Rust 2024 🦀🎄⭐   ----{ANSI_RESET}");
@@ -132,6 +132,8 @@ fn solve_day(day: i32) -> Result<(String, String), String> {
         19 => solution!(day19),
         20 => solution!(day20),
         21 => solution!(day21),
+        22 => solution!(day22),
+        23 => solution!(day23),
         _ => Err("Unknown day".to_string()),
     };
     solution
