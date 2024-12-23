@@ -1,14 +1,135 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::iter::zip;
 
 pub fn solve(input_file_path: &str) -> (String, String) {
-    ("".to_string(), "".to_string())
+    let input = std::fs::read_to_string(input_file_path).unwrap();
+
+    let initial_secrets: Vec<u64> = input
+        .lines()
+        .map(|line| line.parse::<u64>().unwrap())
+        .collect();
+
+    let monkey_market = MonkeyMarket::new(&initial_secrets);
+    let solution_one = solve_part_one(&monkey_market).to_string();
+    let solution_two = solve_part_two(&monkey_market).to_string();
+
+    (solution_one, solution_two)
 }
 
-fn solve_part_one(initial_secrets: &Vec<u64>) -> u64 {
-    let sim = simulate(initial_secrets, 2000);
-    let sum = sim.iter().sum::<u64>();
-    sum
+fn solve_part_one(monkey_market: &MonkeyMarket) -> u64 {
+    monkey_market.get_secret_numbers_at(2000).iter().sum()
+}
+
+fn solve_part_two(monkey_market: &MonkeyMarket) -> u64 {
+    let patterns = monkey_market.generate_all_patterns(4);
+    let cache = monkey_market.create_dictionaries();
+
+    let mut best_revenue: u32 = 0;
+
+    for pattern in patterns {
+        // Test Pattern
+        let revenue_of_pattern = cache
+            .iter()
+            .filter_map(|dic| dic.get(&pattern))
+            .map(|x| *x as u32)
+            .sum::<u32>();
+
+        if revenue_of_pattern > best_revenue {
+            best_revenue = revenue_of_pattern;
+        }
+    }
+    best_revenue as u64
+}
+
+type Pattern = (i8, i8, i8, i8);
+struct MonkeyMarket {
+    initial_secret: Vec<u64>,
+    prices: Vec<Vec<u8>>,
+    diffs: Vec<Vec<i8>>,
+}
+
+impl MonkeyMarket {
+    fn new(initial_secrets: &Vec<u64>) -> MonkeyMarket {
+        let mut prices: Vec<Vec<u8>> = Vec::with_capacity(initial_secrets.len());
+        let mut diffs: Vec<Vec<i8>> = Vec::with_capacity(initial_secrets.len());
+
+        for s in initial_secrets {
+            let steps = 2000;
+            let mut price: Vec<u8> = Vec::with_capacity(steps);
+
+            let mut current = *s;
+            for _ in 0..steps {
+                price.push((current % 10) as u8);
+                let next_secret = next_secret_number(current);
+                current = next_secret;
+            }
+
+            let local_diffs = get_price_diffs(&price);
+
+            prices.push(price);
+            diffs.push(local_diffs)
+        }
+
+        MonkeyMarket {
+            initial_secret: initial_secrets.clone(),
+            prices,
+            diffs,
+        }
+    }
+
+    fn get_secret_numbers_at(&self, steps: usize) -> Vec<u64> {
+        self.initial_secret
+            .iter()
+            .map(|initial_secret| {
+                let mut current = *initial_secret;
+                for _ in 0..steps {
+                    let next_secret = next_secret_number(current);
+                    current = next_secret;
+                }
+                current
+            })
+            .collect::<Vec<u64>>()
+    }
+
+    fn generate_all_patterns(&self, pattern_length: i8) -> HashSet<Pattern> {
+        let mut unique_patterns: HashSet<Pattern> = HashSet::new();
+
+        for monkey_index in 0..self.initial_secret.len() {
+            let diffs: &Vec<i8> = &self.diffs[monkey_index];
+            for i in 0..diffs.len() - pattern_length as usize {
+                let pattern = (diffs[i], diffs[i + 1], diffs[i + 2], diffs[i + 3]);
+                if !unique_patterns.contains(&pattern) {
+                    unique_patterns.insert(pattern);
+                }
+            }
+        }
+
+        unique_patterns
+    }
+
+    fn create_dictionaries(&self) -> Vec<HashMap<Pattern, u8>> {
+        let mut dictionaries: Vec<HashMap<Pattern, u8>> = Vec::new();
+        let pattern_length = 4;
+
+        for i in 0..self.initial_secret.len() {
+            let prices = &self.prices[i];
+            let diffs = &self.diffs[i];
+            let mut dic: HashMap<Pattern, u8> = HashMap::new();
+
+            diffs
+                .windows(pattern_length as usize)
+                .enumerate()
+                .for_each(|(index, diffs)| {
+                    let prices = prices[index + pattern_length as usize];
+                    let e = (diffs[0], diffs[1], diffs[2], diffs[3]);
+                    if !dic.contains_key(&e) {
+                        dic.insert(e, prices);
+                    }
+                });
+            dictionaries.push(dic);
+        }
+        dictionaries
+    }
 }
 
 fn next_secret_number(secret: u64) -> u64 {
@@ -26,122 +147,30 @@ fn prune(secret: u64) -> u64 {
     secret % 16777216
 }
 
-fn simulate(initial_secrets: &Vec<u64>, steps: u32) -> Vec<u64> {
-    let mut output: Vec<u64> = vec![];
-    for secret in initial_secrets.iter() {
-        let mut current_secret = *secret;
-        for _ in 0..steps as usize {
-            current_secret = next_secret_number(current_secret);
-        }
-        output.push(current_secret);
-    }
-    output
-}
-
-fn get_prices_for_monkey(initial_secret: u64, steps: u32) -> Vec<u64> {
-    let mut output: Vec<u64> = Vec::with_capacity(steps as usize);
-    let mut current_secret = initial_secret;
-    for _ in 0..steps {
-        output.push(current_secret % 10);
-        current_secret = next_secret_number(current_secret);
-    }
-    output
-}
-
-fn get_price_diffs(prices: &Vec<u64>) -> Vec<i32> {
-    let mut iter_left = prices.iter();
+fn get_price_diffs(prices: &Vec<u8>) -> Vec<i8> {
+    let iter_left = prices.iter();
     let mut iter_right = prices.iter();
     iter_right.next();
     zip(iter_left, iter_right)
-        .map(|(x, y)| *y as i32 - *x as i32)
+        .map(|(x, y)| *y as i8 - *x as i8)
         .collect()
-}
-
-fn evaluate_pattern(prices: &Vec<u64>, pattern: &Vec<i32>) -> u32 {
-    let diffs: Vec<i32> = get_price_diffs(&prices);
-    let pattern = pattern.as_slice();
-
-    for i in 0..diffs.len() - 4 {
-        let prefix = &diffs.as_slice()[i..];
-        if prefix.starts_with(&pattern) {
-            return prices[i + 4] as u32;
-        }
-    }
-    0
-}
-
-fn evaluate_pattern_all(prices: &Vec<Vec<u64>>, pattern: &Vec<i32>, steps: u32) -> u32 {
-    let mut total_revenue = 0;
-    for price in prices.iter() {
-        let revenue = evaluate_pattern(price, &pattern);
-        //println!("Revenue: {}", revenue);
-        total_revenue += revenue;
-    }
-    total_revenue
-}
-
-fn get_all_patterns(initial_secrets: &Vec<u64>, steps: u32) -> HashSet<Vec<i32>> {
-    let mut unique_patterns: HashSet<Vec<i32>> = HashSet::new();
-    for secret in initial_secrets.iter() {
-        let prices = get_prices_for_monkey(*secret, steps);
-        let diffs: Vec<i32> = get_price_diffs(&prices);
-        for i in 0..diffs.len() - 4 {
-            let pattern = &diffs.as_slice()[i..i + 4];
-            if !unique_patterns.contains(pattern) {
-                unique_patterns.insert(pattern.to_vec());
-                // println!("Pattern: {:?}", pattern);
-            }
-        }
-    }
-    //println!("{:?}", unique_patterns);
-    unique_patterns
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::solutions::day22::{
-        evaluate_pattern_all, get_all_patterns,
-        get_prices_for_monkey,
-    };
+    use super::*;
 
     #[test]
-    fn test_solve() {
-        //println!("{}", mix(42, 15));
-        //println!("{}", prune(100000000));
+    fn test_part_one() {
+        let monkey_market = MonkeyMarket::new(&vec![1, 10, 100, 2024]);
+        let solution = solve_part_one(&monkey_market);
+        assert_eq!(solution, 37327623);
+    }
 
-        let input = std::fs::read_to_string("./resources/day22/input.txt").unwrap();
-        let initial_secrets: Vec<u64> = input.lines().map(|l| l.parse::<u64>().unwrap()).collect();
-
-        //let price = get_prices_for_monkey(123, 10);
-        //println!("Prices {:?}", price);
-        //println!("Diffs {:?}", get_price_diffs(&price));
-        let mut best_price = 0;
-        let mut best_pattern: Vec<i32> = vec![];
-        let all_patterns = get_all_patterns(&initial_secrets, 2000);
-        let all_prices = initial_secrets
-            .iter()
-            .map(|s| get_prices_for_monkey(*s, 2000))
-            .collect::<Vec<Vec<u64>>>();
-        println!("Pattern # {:?}", all_patterns.len());
-        let mut current_pattern = 0;
-        for pattern in all_patterns {
-            //println!("{:?}", current_pattern);
-            let price = evaluate_pattern_all(&all_prices, &pattern, 2000);
-            if price > best_price {
-                best_price = price;
-                best_pattern = pattern;
-            }
-            current_pattern += 1;
-        }
-        println!("Best price: {}", best_price);
-        println!("Best pattern: {:?}", best_pattern);
-        //println!("{:?}", evaluate_pattern_all(&initial_secrets, &vec![-2,1,-1,3], 2000));
-
-        /*
-        for secret in initial_secrets.iter() {
-            let prices = get_prices_for_monkey(*secret, 10);
-            println!("{:?}", prices);
-        }
-        */
+    #[test]
+    fn test_part_two() {
+        let monkey_market = MonkeyMarket::new(&vec![1, 2, 3, 2024]);
+        let solution = solve_part_two(&monkey_market);
+        assert_eq!(solution, 23);
     }
 }

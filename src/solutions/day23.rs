@@ -140,7 +140,7 @@ impl<T: Clone> Iterator for Permutes<T> {
 
         let output = &self.bases.clone();
 
-        self.index = (&self.n - 1);
+        self.index = &self.n - 1;
 
         while self.index >= 0 {
             self.bases[self.index as usize] += 1;

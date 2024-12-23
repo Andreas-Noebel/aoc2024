@@ -64,7 +64,7 @@ fn execute_ci_options(options: CIOptions) {
         }
         ExecutionTarget::RunAllDays => {
             let timer = Instant::now();
-            for day in 0..21 {
+            for day in 0..24 {
                 let lap_time = Instant::now();
                 match solve_day(day) {
                     Ok(solution) => {
