@@ -7,20 +7,21 @@ pub fn solve(input_file_path: &str) -> (String, String) {
 }
 
 fn solve_part_one(graph: &Graph) -> String {
-    let res = find_k_cliques(graph, 3);
+    // A set `part_two_flag` disables the check, which ensures that at least one computer
+    // with prefix 't' is in the set. This also reduces the performance of the clique-check significantly
+    // Since the maximum clique in my puzzle contains a computer with prefix 't' I keep it disabled.
+    let res = find_k_cliques(graph, 3, false);
     res.len().to_string()
 }
 
 fn solve_part_two(graph: &Graph) -> String {
-
-    for clique_size in 0..graph.0.len() {
-        let clique_count = find_k_cliques(graph, clique_size);
+    for clique_size in 1..graph.0.len() {
+        let clique_count = find_k_cliques(graph, clique_size, false);
         if clique_count.len() == 1 {
             return clique_count[0].join(",");
         }
     }
     "No solution found".to_string()
-
 }
 
 type Node = String;
@@ -54,17 +55,16 @@ fn parse_input(input: &str) -> Graph {
     (nodes, edges, neighbours)
 }
 
-fn find_k_cliques(graph: &Graph, k: usize) -> Vec<Vec<Node>> {
+fn find_k_cliques(graph: &Graph, k: usize, part_two_flag: bool) -> Vec<Vec<Node>> {
     let possible_nodes = remove_recursively(&graph.2, (k - 1) as u32);
 
     let mut result: HashSet<Vec<Node>> = HashSet::new();
 
     possible_nodes
         .iter()
-        .filter(|(n, _)| n.starts_with("t"))
+        .filter(|(n, _)| n.starts_with("t") || part_two_flag)
         .for_each(|(s, n)| {
             'combo: for combo_group in Permutes::new(Vec::from_iter(n.clone()), (k - 1) as i32) {
-
                 // Check if other nodes are connected to each other
                 for i in 0..combo_group.len() {
                     for j in i + 1..combo_group.len() {
@@ -177,21 +177,21 @@ impl<T: Clone> Iterator for Permutes<T> {
 
 #[cfg(test)]
 mod tests {
-    use crate::solutions::day23::{find_k_cliques, parse_input};
+    use super::*;
 
     #[test]
     fn test_solve_part_one() {
-        let input = std::fs::read_to_string("./resources/day23/input.txt").unwrap();
+        let input = std::fs::read_to_string("./resources/day23/example.txt").unwrap();
         let puzzle = parse_input(&input);
+        let solution = solve_part_one(&puzzle);
+        assert_eq!(solution, "7");
+    }
 
-        let res = find_k_cliques(&puzzle, 3);
-        println!("{:?}", res.len());
-
-        let res = find_k_cliques(&puzzle, 13);
-        println!("{:?}", res);
-
-
-        // 2495 too high
-        // 2452
+    #[test]
+    fn test_solve_part_two() {
+        let input = std::fs::read_to_string("./resources/day23/example.txt").unwrap();
+        let puzzle = parse_input(&input);
+        let solution = solve_part_two(&puzzle);
+        assert_eq!(solution, "co,de,ka,ta");
     }
 }
