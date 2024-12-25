@@ -1,10 +1,11 @@
 use std::iter::zip;
 
-fn solve(input_file_path: &str){
+pub fn solve(input_file_path: &str) -> (String, String) {
 
     let input = std::fs::read_to_string(input_file_path).unwrap();
     let (lock,key) = parse_puzzle(&input);
     let part_one = solve_part_one(&lock, &key);
+    (part_one.to_string(), "".to_string())
 
 }
 
