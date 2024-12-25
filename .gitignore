@@ -2,3 +2,4 @@
 .idea
 /resources/**
 !/resources/.gitkeep
+/benchmark.txt

@@ -1,12 +1,13 @@
-use crate::solutions::day24::Operation::OR;
+use crate::solutions::day24::Operation::{AND, OR, XOR};
 use std::cmp::PartialEq;
-use Operation::{AND, XOR};
 
 pub fn solve(file_path: &str) -> (String, String) {
     let input = std::fs::read_to_string(file_path).unwrap();
     let mut circuit = parse_circuit(&input);
 
-    let part_one = circuit.evaluate(circuit.default_x, circuit.default_y).unwrap();
+    let part_one = circuit
+        .evaluate(circuit.default_x, circuit.default_y)
+        .unwrap();
     let part_two = solve_part_two(&mut circuit);
 
     (part_one.to_string(), part_two.to_string())
@@ -37,8 +38,6 @@ fn parse_circuit(input: &str) -> Circuit {
 
     let mut x = 0u64;
     let mut y = 0u64;
-    let mut x_length = 0;
-    let mut y_length = 0;
     let mut z_length = 0;
 
     let mut gates: Vec<Gate> = Vec::new();
@@ -55,11 +54,9 @@ fn parse_circuit(input: &str) -> Circuit {
         match input_register {
             "x" => {
                 x |= input_value << register_index;
-                x_length += 1;
             }
             "y" => {
                 y |= input_value << register_index;
-                y_length += 1;
             }
             _ => {}
         }
@@ -96,8 +93,6 @@ fn parse_circuit(input: &str) -> Circuit {
 
     Circuit {
         gates,
-        register_x_length: x_length,
-        register_y_length: y_length,
         output_length: z_length,
         default_x: x,
         default_y: y,
@@ -123,8 +118,6 @@ struct Gate {
 #[derive(Debug, Clone)]
 struct Circuit {
     gates: Vec<Gate>,
-    register_x_length: usize,
-    register_y_length: usize,
     output_length: usize,
     default_x: u64,
     default_y: u64,
@@ -171,7 +164,7 @@ impl Circuit {
         }
 
         match self.gates.iter().find(|gate| gate.output == cable_id) {
-            None => return Ok(false),
+            None => Ok(false),
             Some(gate) => match gate.operation {
                 XOR => {
                     let a = self.evaluate_cable_recursively(
@@ -187,7 +180,7 @@ impl Circuit {
                         max_recursion - 1,
                     );
                     if a.is_ok() && b.is_ok() {
-                        Ok(a.unwrap() ^ b.unwrap())
+                        Ok(a? ^ b?)
                     } else {
                         Err("".to_string())
                     }
@@ -300,7 +293,6 @@ impl Circuit {
                         return (gate.input_a.clone(), carry_ha_1.clone());
                     }
                     panic!("Unknown gate found");
-
                 });
 
             return match one_input_match {
@@ -384,55 +376,6 @@ impl Circuit {
         }
     }
 
-    fn get_gate_by_input(&self, input_a: &CableId, input_b: &CableId) -> Option<&Gate> {
-        self.gates.iter().find(|gate| {
-            (gate.input_a == *input_a && gate.input_b == *input_b)
-                || (gate.input_b == *input_a && gate.input_a == *input_b)
-        })
-    }
-    fn get_gate_by_output(&self, output_a: &CableId) -> Option<&Gate> {
-        self.gates.iter().find(|gate| gate.output == *output_a)
-    }
-
-    fn get_gates_matching_any_input(&self, input_a: &CableId, input_b: &CableId) -> Vec<&Gate> {
-        self.gates
-            .iter()
-            .filter(|gate| gate.input_a == *input_a || gate.input_b == *input_b)
-            .collect()
-    }
-
-    fn print_mermaid(&self) {
-        println!("graph TD");
-        for (index, gate) in self.gates.iter().enumerate() {
-            let a = &gate.input_a;
-            let b = &gate.input_b;
-
-            println!("  {} --> {index}[{:?}]", a, gate.operation);
-            println!("  {} --> {index}[{:?}]", b, gate.operation);
-            println!("  {index}[{:?}] --> {}", gate.operation, gate.output)
-        }
-    }
-
-    fn evaluate_circuit(&self) -> u8 {
-        let mut x: u64 = 1 << self.output_length - 2;
-        let mut faulty_bits = 0;
-
-        while x > 0 {
-            let expected = x;
-            let actual = self.evaluate(x, 0);
-            if actual.is_err() {
-                return u8::MAX;
-            }
-            let actual = actual.unwrap();
-            let bit = expected ^ actual;
-            if actual != expected {
-                faulty_bits += 1;
-            }
-            x = x >> 1;
-        }
-        faulty_bits
-    }
-
     fn swap_outputs(&mut self, output_a: CableId, output_b: CableId) {
         self.gates = self
             .gates
@@ -451,26 +394,5 @@ impl Circuit {
                 };
             })
             .collect::<Vec<Gate>>();
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::solutions::day24::{parse_circuit, CableId, ParseError, SwapSuggestion};
-
-    #[test]
-    fn test_solve() {
-        let input = std::fs::read_to_string("./resources/day24/input.txt").unwrap();
-        let mut circuit = parse_circuit(&input);
-
-        println!(
-            "{:?}",
-            circuit.evaluate(circuit.default_x, circuit.default_y)
-        );
-
-        println!("{:?}", circuit.parse_full_adder(0, None));
-        println!("{:?}", circuit.evaluate_circuit(),);
-
-        return;
     }
 }

@@ -2,7 +2,7 @@ pub mod solutions;
 
 use std::env;
 use std::path::Path;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 macro_rules! solution {
     ($day:tt) => {{
@@ -25,10 +25,10 @@ fn main() {
         parse_options(&args)
     } else {
         CIOptions {
-            target: ExecutionTarget::RunSingleDay(24),
+            target: ExecutionTarget::Help,
         }
     };
-    println!("{ANSI_BOLD}---- Advent of Rust 2024 🦀🎄⭐   ----{ANSI_RESET}");
+    println!("{ANSI_BOLD}-------- Advent of Rust 2024 🦀🎄⭐   --------{ANSI_RESET}");
     execute_ci_options(ci_options);
 }
 
@@ -46,6 +46,7 @@ enum ExecutionTarget {
     RunAllDays,
     RunSingleDay(i32),
     Help,
+    Benchmark,
 }
 
 fn execute_ci_options(options: CIOptions) {
@@ -64,7 +65,7 @@ fn execute_ci_options(options: CIOptions) {
         }
         ExecutionTarget::RunAllDays => {
             let timer = Instant::now();
-            for day in 0..25 {
+            for day in 0..26 {
                 let lap_time = Instant::now();
                 match solve_day(day) {
                     Ok(solution) => {
@@ -76,7 +77,32 @@ fn execute_ci_options(options: CIOptions) {
             }
             println!("Total runtime: {:.2?}", timer.elapsed());
         }
-        ExecutionTarget::Help => {}
+        ExecutionTarget::Benchmark => {
+            println!("Day  Average  Min  Max ");
+            for day in 0..26 {
+                let mut lap_times: Vec<Duration> = vec![];
+                for _ in 0..10 {
+                    let lap_time = Instant::now();
+                    let _ = solve_day(day);
+                    lap_times.push(lap_time.elapsed());
+                }
+                lap_times.sort();
+                let min = lap_times[0];
+                let max = lap_times.last().unwrap();
+                let avg = lap_times.iter().sum::<Duration>() / lap_times.len() as u32;
+                println!("[{}]  {:.2?}  {:.2?}  {:.2?}", day, avg, min, max);
+            }
+        }
+        ExecutionTarget::Help => {
+            println!("Usage:");
+            println!("  aoc2024 [OPTION]");
+            println!();
+            println!("Options:");
+            println!("  -d, -day  <n>        # Solves a specific day n where n is in [1..25]");
+            println!("  -a, -all             # Solves all days");
+            println!("  -b, -benchmark       # Runs the internal benchmark");
+            println!("  -h, -help            # Prints this page   ");
+        }
     }
 }
 fn parse_options(args: &Vec<String>) -> CIOptions {
@@ -91,6 +117,9 @@ fn parse_options(args: &Vec<String>) -> CIOptions {
             "-a" | "-all" => {
                 execution_target = ExecutionTarget::RunAllDays;
             }
+            "-b" | "-benchmark" => {
+                execution_target = ExecutionTarget::Benchmark;
+            }
             "-d" | "-day" => match args.next() {
                 Some(day) => {
                     let d = day.parse::<i32>().unwrap();
@@ -98,6 +127,9 @@ fn parse_options(args: &Vec<String>) -> CIOptions {
                 }
                 None => {}
             },
+            "-h" | "-help" | "?" => {
+                execution_target = ExecutionTarget::Help;
+            }
             _ => {
                 println!("Unknown command: {}", command);
             }
