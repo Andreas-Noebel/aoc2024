@@ -28,7 +28,7 @@ fn main() {
             target: ExecutionTarget::Help,
         }
     };
-    println!("{ANSI_BOLD}-------- Advent of Rust 2024 🦀🎄⭐   --------{ANSI_RESET}");
+    println!("{ANSI_BOLD}----------- Advent of Rust 2024 🦀🎄⭐   ------------{ANSI_RESET}");
     execute_ci_options(ci_options);
 }
 
@@ -36,7 +36,7 @@ fn print_solution(day: &str, answers: (String, String), time: String) {
     println!("Day {} [{}]", day, time);
     println!("  ├─── Part 1: {}", answers.0);
     println!("  └─── Part 2: {}", answers.1);
-    println!("-------------------------------------")
+    println!("---------------------------------------------")
 }
 
 struct CIOptions {
@@ -46,7 +46,7 @@ enum ExecutionTarget {
     RunAllDays,
     RunSingleDay(i32),
     Help,
-    Benchmark,
+    Benchmark(i32),
 }
 
 fn execute_ci_options(options: CIOptions) {
@@ -77,11 +77,12 @@ fn execute_ci_options(options: CIOptions) {
             }
             println!("Total runtime: {:.2?}", timer.elapsed());
         }
-        ExecutionTarget::Benchmark => {
-            println!("Day  Average  Min  Max ");
-            for day in 0..26 {
+        ExecutionTarget::Benchmark(loops) => {
+            println!("|{: ^5}|{: ^14}|{: ^14}|{: ^14}|", "Day", "Average [µs]", "Min [µs]", "Max [µs]");
+            println!("|{:-^5}|{:-^14}|{:-^14}|{:-^14}|", "", "", "", "");
+            for day in 1..26 {
                 let mut lap_times: Vec<Duration> = vec![];
-                for _ in 0..10 {
+                for _ in 0..loops {
                     let lap_time = Instant::now();
                     let _ = solve_day(day);
                     lap_times.push(lap_time.elapsed());
@@ -90,7 +91,7 @@ fn execute_ci_options(options: CIOptions) {
                 let min = lap_times[0];
                 let max = lap_times.last().unwrap();
                 let avg = lap_times.iter().sum::<Duration>() / lap_times.len() as u32;
-                println!("[{}]  {:.2?}  {:.2?}  {:.2?}", day, avg, min, max);
+                println!("|  {:0>2} | {: >12.2?} | {: >12.2?} | {: >12.2?} |", day, avg.as_micros(), min.as_micros(), max.as_micros());
             }
         }
         ExecutionTarget::Help => {
@@ -118,7 +119,15 @@ fn parse_options(args: &Vec<String>) -> CIOptions {
                 execution_target = ExecutionTarget::RunAllDays;
             }
             "-b" | "-benchmark" => {
-                execution_target = ExecutionTarget::Benchmark;
+                match args.next() {
+                    Some(loops) => {
+                        let loops = loops.parse::<i32>().unwrap();
+                        execution_target = ExecutionTarget::Benchmark(loops);
+                    }
+                    _ => {
+                        execution_target = ExecutionTarget::Benchmark(10);
+                    }
+                }
             }
             "-d" | "-day" => match args.next() {
                 Some(day) => {
